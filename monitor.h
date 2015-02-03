@@ -4,7 +4,10 @@
 #include <string>
 
 using namespace std;
-//void loadConfigure();
+class Monitor {
+private:
+    
+};
 
 
 
