@@ -3,6 +3,8 @@
 
 #include <string>
 #include <vector>
+#include <netinet/in.h>
+#include <map>
 
 using namespace std;
 
@@ -13,10 +15,12 @@ using namespace std;
 
 struct Property
 {
-	/* data from configure.txt*/
+	/* data from configure file*/
 	string myName;
 	string masterIP; 
     string deviceName;
+    map<string, int>from;
+    map<string, int>to;
 
 	/*
 	data from eth

@@ -1,6 +1,7 @@
 #include "monitor.h"
 #include "property.h"
 #include "parser.h"
+#include "utility.h"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -10,6 +11,7 @@
 #include <pcap.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <net/ethernet.h>
 
 #define SNAP_LEN 1518
 
@@ -18,6 +20,11 @@ using namespace std;
 void filter(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
 	//TODO
 	//fill this filter
+	struct ether_header *ethernet;  /* The ethernet header [1] */
+	ethernet = (struct ether_header*)(packet);
+
+	printETH(ethernet);
+
 }
 
 int main (int arg, char *argv[]) {
@@ -30,9 +37,14 @@ int main (int arg, char *argv[]) {
 		<<p.deviceName<<endl
 		<<p.myIP<<endl;
 
+	map<string, int>::iterator it;
+	for (it = p.from.begin(); it != p.from.end(); it++) {
+		cout<<it->first<<"\t"<<it->second<<endl;
+	}
+
 	//open device and listen
-	bpf_u_int32 mask;
-	bpf_u_int32 net;
+	//bpf_u_int32 mask;
+	//bpf_u_int32 net;
 	pcap_t *handle;
 	int num_pkts = -1;
 
@@ -52,10 +64,12 @@ int main (int arg, char *argv[]) {
 	}
 
 	//set direction, only capture packets that are sent out of the nic
+	/*
 	if (pcap_setdirection(handle, PCAP_D_OUT) == -1) {
 		cout<<p.deviceName<<" set direction failed\n";
 		exit(EXIT_FAILURE);
 	}
+	*/
 
 	//set filter, only capture ip packet
 	struct in_addr ipAddr;

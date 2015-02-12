@@ -1,6 +1,7 @@
 #include "parser.h"
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,6 +60,24 @@ int Parser::setProperty(struct Property &p, string &key, string &value) {
     else if (key.compare("deviceName") == 0) {
         p.deviceName = value;
     }
+    else if (key.compare("cluster") == 0) {
+        //set entry of maps
+        string::size_type sz;
+        int lineNum = stoi(value, &sz); 
+        return lineNum;
+    }
+    else if (key.compare("_cluster") == 0) {
+        //struct sockaddr_in addr;
+        //inet_pton(AF_INET, value.c_str(), &(addr.sin_addr));
+        if (value.compare(p.myIP) == 0)
+            return 0;
+
+        p.from[value] = 0;
+        p.to[value] = 0;
+    }
+    else if (key.compare("myIP") == 0) {
+        p.myIP = value;
+    }
     else
         return -1;
 
@@ -80,13 +99,24 @@ int Parser::parseConfigure(struct Property &p) {
 	while (ifs.good()) {
         string key = "";
         string value = "";
-        if (parseLine(line, key, value) < 0) {
+        int res = parseLine(line, key, value);
+        if (res < 0) {
             cout<<TAG<<"\t"<<"Configure file Error !\n";
             exit(EXIT_FAILURE);
         }
-        if (setProperty(p, key, value) < 0) {
+        res = setProperty(p, key, value);
+        if (res < 0) {
             cout<<TAG<<"\t"<<"Property name Error !\n";
             exit(EXIT_FAILURE);
+        }
+        else if (res > 0) {
+            //parse ip of cluster
+            while (res > 0) {
+                res--;
+                getline(ifs, line);
+                string temp("_cluster");
+                setProperty(p, temp, line);
+            }
         }
         getline(ifs, line);
     }
@@ -102,14 +132,11 @@ int Parser::parseConfigure(struct Property &p) {
  * @return   [description]
  */
 int Parser::getProperty(struct Property &p) {
-    /*
-    get property from file at first
-     */
-    parseConfigure(p);
 
     /*
     get ip from eth by libpcap
      */
+    /*
     const char *nicName = p.deviceName.c_str();
     //open corresponding nic and get IP
     int fd;
@@ -125,6 +152,12 @@ int Parser::getProperty(struct Property &p) {
     inet_ntop(AF_INET, &(addr->sin_addr), str, INET_ADDRSTRLEN);
     string ipStr(str);
     p.myIP = ipStr;
+    */
+   
+    /*
+    get property from file
+     */
+    parseConfigure(p);
 
     return 0;
     
