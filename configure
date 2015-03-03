@@ -1,9 +1,9 @@
 myName:test
 masterIP:192.168.3.102
 myIP:192.168.1.104
-deviceName:wlan0
+deviceName:eth0
 cluster:4
-115.239.210.27
+192.168.1.88
 192.168.1.104
 192.168.3.1
 192.168.3.102

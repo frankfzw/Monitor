@@ -14,7 +14,7 @@ all: $(TARGETS)
 	utility.o	utility.h utility.cpp
 
 monitor:        monitor.o parser.o utility.o
-	$(CXX) $(LDFLAGS) -o $@ $^ -lpcap
+	$(CXX) $(LDFLAGS) -o $@ $^ -lpcap -lpthread
 
 clean:
 	rm -f *~ *.o $(TARGETS)

@@ -12,19 +12,105 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <net/ethernet.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <fstream>
 
-#define SNAP_LEN 1518
 
 using namespace std;
+
+void *showWorkingGadget(void *args) {
+    
+    int i = 0;
+    string out = "\b|";
+    cout<<"Working....\t"<<out;
+    
+    while(true) {
+        usleep(100);
+        i = (i + 1) % 5;
+        switch(i) {
+        case 0:
+            out = "\b|";
+            break;
+        case 1:
+            out = "\b\\";
+            break;
+        case 2:
+            out = "\b-";
+            break;
+        case 3:
+            out = "\b/";
+            break;
+        case 4:
+            out = "\b-";
+            break;
+        default:
+            out = "\b|";
+        }
+        cout<<out;
+    }
+    
+    return NULL;
+}
 
 void filter(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
 	//TODO
 	//fill this filter
-	struct ether_header *ethernet;  /* The ethernet header [1] */
-	ethernet = (struct ether_header*)(packet);
+    //get property
+    struct Property *p = (struct Property *)args;
 
-	printETH(ethernet);
+	//struct ether_header *ethernet;  /* The ethernet header [1] */
+	//ethernet = (struct ether_header*)(packet);
+    //printETH(ethernet);
+    struct ip *iph = (struct ip*)(packet + SIZE_ETHERNET);
+    //printIP(iph);
+    string srcIP(inet_ntoa(iph->ip_src));
+    string dstIP(inet_ntoa(iph->ip_dst));
+    if (p->from.find(srcIP) != p->from.end()) {
+        p->from[srcIP] ++;
+        //cout<<"From "<<srcIP<<": "<<p->from[srcIP]<<endl;
+    }
+    else if (p->to.find(dstIP) != p->to.end()) {
+        p->to[dstIP] ++;
+        //cout<<"To "<<dstIP<<": "<<p->to[dstIP]<<endl;
+    }
+    else {
+        //ingore the packet
+        return;
+    }
+    
 
+}
+
+void *writeData(void *args) {
+    //cout<<"Working...   |";
+    struct Property *p = (struct Property *)args;
+    //create log file and write the number of clients in cluster with count interval
+    ofstream ofs;
+    ofs.open("from", fstream::out);
+    ofs<<p->from.size()<<endl<<INTERVAL<<endl;
+    ofs.close();
+    ofs.open("to", fstream::out);
+    ofs<<p->from.size()<<endl<<INTERVAL<<endl;
+    ofs.close();
+    while (true) {
+        usleep(INTERVAL);
+        ofs.open("from", fstream::out | fstream::app);
+        //cout<<"Writing Data:\n";
+        map<string, int>::iterator it;
+        //cout<<"From:\n";
+        for (it = p->from.begin(); it != p->from.end(); it++) {
+            ofs<<it->first<<"\t"<<it->second<<endl;
+        }
+        ofs.close();
+        ofs.open("to", fstream::out | fstream::app);
+        //cout<<"To:\n";
+        for (it = p->to.begin(); it != p->to.end(); it++) {
+            ofs<<it->first<<"\t"<<it->second<<endl;
+        }
+        ofs.close();
+    }
+    return NULL;
 }
 
 int main (int arg, char *argv[]) {
@@ -37,10 +123,12 @@ int main (int arg, char *argv[]) {
 		<<p.deviceName<<endl
 		<<p.myIP<<endl;
 
+	cout<<"Cluster:\n";
 	map<string, int>::iterator it;
 	for (it = p.from.begin(); it != p.from.end(); it++) {
 		cout<<it->first<<"\t"<<it->second<<endl;
 	}
+
 
 	//open device and listen
 	//bpf_u_int32 mask;
@@ -85,6 +173,22 @@ int main (int arg, char *argv[]) {
 	}
 
 	cout<<p.deviceName<<" is ready\n";
-	pcap_loop(handle, num_pkts, filter, NULL);
+    //create a thread to show the working status
+    pthread_t showThread;
+    int sr;
+    sr = pthread_create(&showThread, NULL, showWorkingGadget, NULL);
+    if (sr) {
+        cout<<"Pthread Error!!\n";
+        exit(EXIT_FAILURE);
+    }
+    //create a thread to write the data into file per 100ms
+    pthread_t thread;
+    int r;
+    r = pthread_create(&thread, NULL, writeData, (void *)&p);
+    if (r) {
+        cout<<"Pthread Error!!\n";
+        exit(EXIT_FAILURE);
+    }
+	pcap_loop(handle, num_pkts, filter, (u_char *)&p);
 
 }
