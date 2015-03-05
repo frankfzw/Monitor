@@ -72,8 +72,8 @@ int Parser::setProperty(struct Property &p, string &key, string &value) {
         if (value.compare(p.myIP) == 0)
             return 0;
 
-        p.from[value] = 0;
-        p.to[value] = 0;
+        p.in[value] = 0;
+        p.out[value] = 0;
     }
     else if (key.compare("myIP") == 0) {
         p.myIP = value;
