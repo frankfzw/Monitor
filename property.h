@@ -19,8 +19,8 @@ struct Property
 	string myName;
 	string masterIP; 
     string deviceName;
-    map<string, int>from;
-    map<string, int>to;
+    map<string, int>in;
+    map<string, int>out;
 
 	/*
 	data from eth

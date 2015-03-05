@@ -59,19 +59,22 @@ void filter(u_char *args, const struct pcap_pkthdr *header, const u_char *packet
     //get property
     struct Property *p = (struct Property *)args;
 
-	//struct ether_header *ethernet;  /* The ethernet header [1] */
-	//ethernet = (struct ether_header*)(packet);
+    //only capture ip
+	struct ether_header *ethernet;  /* The ethernet header [1] */
+	ethernet = (struct ether_header*)(packet);
+    if (ntohs(ethernet->ether_type) != ETHERTYPE_IP)
+        return;
     //printETH(ethernet);
     struct ip *iph = (struct ip*)(packet + SIZE_ETHERNET);
     //printIP(iph);
     string srcIP(inet_ntoa(iph->ip_src));
     string dstIP(inet_ntoa(iph->ip_dst));
-    if (p->from.find(srcIP) != p->from.end()) {
-        p->from[srcIP] ++;
+    if ((p->in.find(srcIP) != p->in.end()) && (dstIP.compare(p->myIP) == 0)) {
+        p->in[srcIP] ++;
         //cout<<"From "<<srcIP<<": "<<p->from[srcIP]<<endl;
     }
-    else if (p->to.find(dstIP) != p->to.end()) {
-        p->to[dstIP] ++;
+    else if ((p->out.find(dstIP) != p->out.end()) && (srcIP.compare(p->myIP) == 0)) {
+        p->out[dstIP] ++;
         //cout<<"To "<<dstIP<<": "<<p->to[dstIP]<<endl;
     }
     else {
@@ -87,25 +90,25 @@ void *writeData(void *args) {
     struct Property *p = (struct Property *)args;
     //create log file and write the number of clients in cluster with count interval
     ofstream ofs;
-    ofs.open("from", fstream::out);
-    ofs<<p->from.size()<<endl<<INTERVAL<<endl;
+    ofs.open("in", fstream::out);
+    ofs<<p->in.size()<<endl<<INTERVAL<<endl;
     ofs.close();
-    ofs.open("to", fstream::out);
-    ofs<<p->from.size()<<endl<<INTERVAL<<endl;
+    ofs.open("out", fstream::out);
+    ofs<<p->out.size()<<endl<<INTERVAL<<endl;
     ofs.close();
     while (true) {
         usleep(INTERVAL);
-        ofs.open("from", fstream::out | fstream::app);
+        ofs.open("in", fstream::out | fstream::app);
         //cout<<"Writing Data:\n";
         map<string, int>::iterator it;
         //cout<<"From:\n";
-        for (it = p->from.begin(); it != p->from.end(); it++) {
+        for (it = p->in.begin(); it != p->in.end(); it++) {
             ofs<<it->first<<"\t"<<it->second<<endl;
         }
         ofs.close();
-        ofs.open("to", fstream::out | fstream::app);
+        ofs.open("out", fstream::out | fstream::app);
         //cout<<"To:\n";
-        for (it = p->to.begin(); it != p->to.end(); it++) {
+        for (it = p->out.begin(); it != p->out.end(); it++) {
             ofs<<it->first<<"\t"<<it->second<<endl;
         }
         ofs.close();
@@ -125,7 +128,7 @@ int main (int arg, char *argv[]) {
 
 	cout<<"Cluster:\n";
 	map<string, int>::iterator it;
-	for (it = p.from.begin(); it != p.from.end(); it++) {
+	for (it = p.in.begin(); it != p.in.end(); it++) {
 		cout<<it->first<<"\t"<<it->second<<endl;
 	}
 
