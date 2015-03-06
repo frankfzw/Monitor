@@ -90,15 +90,15 @@ void *writeData(void *args) {
     struct Property *p = (struct Property *)args;
     //create log file and write the number of clients in cluster with count interval
     ofstream ofs;
-    ofs.open("in", fstream::out);
+    ofs.open(p->filePath + "/in", fstream::out);
     ofs<<p->in.size()<<endl<<INTERVAL<<endl;
     ofs.close();
-    ofs.open("out", fstream::out);
+    ofs.open(p->filePath + "/out", fstream::out);
     ofs<<p->out.size()<<endl<<INTERVAL<<endl;
     ofs.close();
     while (true) {
         usleep(INTERVAL);
-        ofs.open("in", fstream::out | fstream::app);
+        ofs.open(p->filePath + "/in", fstream::out | fstream::app);
         //cout<<"Writing Data:\n";
         map<string, int>::iterator it;
         //cout<<"From:\n";
@@ -106,7 +106,7 @@ void *writeData(void *args) {
             ofs<<it->first<<"\t"<<it->second<<endl;
         }
         ofs.close();
-        ofs.open("out", fstream::out | fstream::app);
+        ofs.open(p->filePath + "/out", fstream::out | fstream::app);
         //cout<<"To:\n";
         for (it = p->out.begin(); it != p->out.end(); it++) {
             ofs<<it->first<<"\t"<<it->second<<endl;
@@ -121,11 +121,12 @@ int main (int argc, char *argv[]) {
         cout<<"usage: ./monitor configurePath\n";
         exit(EXIT_FAILURE);
     }
-    string filename(argv[1]);
-    cout<<"filename: "<<filename<<endl;
+    string filePath(argv[1]);
+    cout<<"filePath: "<<filePath<<endl;
 
 	struct Property p;
-	Parser parser(filename);
+    p.filePath = filePath;
+	Parser parser(filePath + "/configure");
 	parser.getProperty(p);
 
 	cout<<p.myName<<endl

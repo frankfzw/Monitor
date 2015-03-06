@@ -22,6 +22,9 @@ struct Property
     map<string, int>in;
     map<string, int>out;
 
+    //passed by user
+    string filePath;
+
 	/*
 	data from eth
 	 */
