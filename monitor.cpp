@@ -116,9 +116,16 @@ void *writeData(void *args) {
     return NULL;
 }
 
-int main (int arg, char *argv[]) {
+int main (int argc, char *argv[]) {
+    if (argc != 2) {
+        cout<<"usage: ./monitor configurePath\n";
+        exit(EXIT_FAILURE);
+    }
+    string filename(argv[1]);
+    cout<<"filename: "<<filename<<endl;
+
 	struct Property p;
-	Parser parser("configure");
+	Parser parser(filename);
 	parser.getProperty(p);
 
 	cout<<p.myName<<endl
