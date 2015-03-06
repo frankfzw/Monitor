@@ -28,9 +28,9 @@ for slave in $SLAVE_NAMES ; do
 
  # copy traffic files from slaves
  scp hduser@$slave:$MONITOR_HOME/in $MONITOR_HOME
- mv $MONITOR_HOME/in $slave+"_in"
+ mv $MONITOR_HOME/in $slave"_in"
  scp hduser@$slave:$MONITOR_HOME/out $MONITOR_HOME
- mv $MONITOR_HOME/out $slave+"_out"
+ mv $MONITOR_HOME/out $slave"_out"
  if [ "$HADOOP_SLAVE_SLEEP" != "" ]; then
    sleep $HADOOP_SLAVE_SLEEP
  fi
